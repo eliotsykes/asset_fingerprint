@@ -1,13 +1,41 @@
 AssetFingerprint
 ================
+Ruby on Rails plugin to fingerprint asset files using md5 checksum in filenames
+to improve cacheability compared to default Rails asset caching strategy.
 
-Introduction goes here.
+Originally developed to improve the performance of MissedConnections.com.
 
+Plugin can also be configured to use the default Rails asset caching strategy of 
+putting file timestamps in the query string.
 
-Example
-=======
+Based on guidelines recommended by Google Page Speed here:
+http://code.google.com/speed/page-speed/docs/caching.html
 
-Example goes here.
+Rails Versions
+==============
+Tested with Rails 2.2.3 though there's a good chance it'll work with earlier
+and newer versions with little or no modification.
 
+HOWTO
+=====
+Install the plugin at vendor/plugins/asset_fingerprint in your app.
 
-Copyright (c) 2010 [name of plugin creator], released under the MIT license
+Create a config/initializers/asset_fingerprint.rb file and add these lines:
+
+# config/initializers/asset_fingerprint.rb start
+require 'asset_fingerprint/asset_tag_helper'
+
+ActionView::Helpers::AssetTagHelper.asset_fingerprint_strategy = 
+  { :fingerprint => :timestamp, :path => :query_string }
+
+# config/initializers/asset_fingerprint.rb end
+
+Change the asset_fingerprint_strategy in this initializer file to suit
+your needs. Set :fingerprint to :timestamp and :path to :query_string if
+you want the same behaviour that ships with Rails, however, recommended strategy
+is { :fingerprint => :md5, :path => :file_name } for maximum cacheability. 
+
+Copyright (c) 2010 Eliot Sykes, released under the MIT license
+
+More projects at http://blog.eliotsykes.com/my-projects/
+

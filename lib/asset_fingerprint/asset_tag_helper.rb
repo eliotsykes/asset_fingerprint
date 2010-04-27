@@ -48,15 +48,27 @@ module ActionView
         end
       end
       
+      def fingerprint_in_query_string(source, asset_fingerprint)
+        source + "?#{asset_fingerprint}"
+      end
+      
+      def fingerprint_in_file_name(source, asset_fingerprint)
+        # Insert the fingerprinted string as part of the filename
+        # The -1 value causes the fingerprint to be appended, happens
+        # if there is no period in source.
+        # Example result if source = 'images/logo.png' the result would
+        # be "images/logo-fp-#{asset_fingerprint}.png"
+        fingerprint_index = source.rindex('.') || -1
+        String.new(source).insert(fingerprint_index, "-fp-#{asset_fingerprint}")
+      end
+      
       # Replaces the Rails method of the same name in AssetTagHelper.
       def rewrite_asset_path(source)
         asset_fingerprint = rails_asset_fingerprint(source)
         if :query_string == @@asset_fingerprint_strategy[:path]
-          result = source + "?#{asset_fingerprint}"
+          result = fingerprint_in_query_string(source, asset_fingerprint)
         elsif :file_name == @@asset_fingerprint_strategy[:path]
-          # Replace the file extension with -asset_fingerprint
-          #result = source.replace
-          result = source
+          result = fingerprint_in_file_name(source, asset_fingerprint)
         else
           raise RuntimeError.new "Unknown :path strategy '#{@@asset_fingerprint_strategy[:path]}'"
         end
