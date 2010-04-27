@@ -48,6 +48,7 @@ require 'asset_fingerprint/asset_tag_helper'
 
 AssetFingerprint.fingerprinter = :md5
 AssetFingerprint.path_rewriter = :file_name
+AssetFingerprint.symlink_on_the_fly = true
 
 # config/initializers/asset_fingerprint.rb end
 
@@ -104,7 +105,17 @@ following rake task:
 rake RAILS_ENV=the_env asset_fingerprint:symlinks:generate (WORK IN PROGRESS)
 
 The symlinks can also be generated at runtime, which is useful during
-development.
+development. So the plugin works out-of-the-box, this option is enabled
+by default.
+
+*TIP* If you're trying the symlink option out and afterward want to remove all
+      symlinks from the public directory, you can use this command:
+      
+      shell> find public/ -type l -exec rm -i {} \;
+      
+      Remove the -i option if you don't want to be prompted to delete each
+      symbolic link. Be careful using this as you may delete symlinks
+      you did not want to.
 
 
 
