@@ -43,29 +43,28 @@ Install the plugin at vendor/plugins/asset_fingerprint in your app.
 Create a config/initializers/asset_fingerprint.rb file and add these lines:
 
 # config/initializers/asset_fingerprint.rb start
+
 require 'asset_fingerprint/asset_tag_helper'
 
 AssetFingerprint.fingerprinter = :md5
-
-ActionView::Helpers::AssetTagHelper.asset_fingerprint_strategy = 
-  { :path => :file_name }
+AssetFingerprint.path_rewriter = :file_name
 
 # config/initializers/asset_fingerprint.rb end
 
 Configure this initializer file to suit your needs.
 
-Set fingerprinter to :timestamp and :path to :query_string if
+Set fingerprinter to :timestamp and path_rewriter to :query_string if
 you want the same behaviour that ships with Rails, however, the recommended
-strategy is to use the :md5 fingerprinter and a :path value of :file_name for
+strategy is to use the :md5 fingerprinter and the :file_name path_rewriter for
 maximum cacheability. 
 
 If you're using file_name fingerprinting (recommended)
 ======================================================
-file_name fingerprinting changes the file name of the asset paths generated
+The :file_name path rewriter changes the file name of the asset paths generated
 by rails helpers such as image_tag, image_path, stylesheet_link_tag, etc.
 
-Your app will need to know which asset file to serve for a given fingerprinted
-file name as these fingerprinted file names do not correspond to a real file.
+Your app will need to know which asset file to serve for a given rewritten
+file path as the rewritten paths do not correspond to a real file.
 
 Luckily getting your app to do this is simple in most cases, two options
 are presented below:
@@ -73,25 +72,26 @@ are presented below:
 Option 1 - Apache Rewrite Rule
 ===============================
 Add *only* one of these rewrite rules to Apache to get it to serve asset files
-which are requested with fingerprinted file names.
+with rewritten file names..
 
-# For md5 file_name strategy fingerprinter == :md5, :path == :file_name
+# For md5 file_name strategy fingerprinter == :md5, path_rewriter == :file_name
 # md5 checksums are 32 characters long.
 RewriteRule ^(.+)-fp-[0-9a-z]{32}(.*)$ $1$2 [QSA,PT,L]
 
 -OR-
 
-# For timestamp file_name strategy: fingerprinter == :timestamp, :path == :file_name }
+# For timestamp file_name strategy: fingerprinter == :timestamp,
+# path_rewriter == :file_name
 # You should check that the timestamps returned by your production operating
 # system are 10 digits long. If they are not, change the {10} in the regex
 # below to the correct length.
 RewriteRule ^(.+)-fp-[0-9]{10}(.*)$ $1$2 [QSA,PT,L]
 
 
-Option 2 - Generate fingerprint containing symlinks
-===================================================
+Option 2 - Generate symlinks
+============================
 This option creates a symlink for each asset file, where the symlink is the
-fingerprinted filename, e.g. the asset file images/logo.png would get a symlink
+rewritten filename, e.g. the asset file images/logo.png would get a symlink
 like images/logo-fp-1234567890.png pointing to it.
 
 The symlink option is recommended if you don't have Apache Rewrite module 
@@ -101,7 +101,7 @@ performance option enabled which requires that Apache Rewrite is not used).
 To generate the symlinks at deployment time, e.g. in capistrano, call the
 following rake task:
 
-rake RAILS_ENV=the_env asset_fingerprint:symlinks:generate
+rake RAILS_ENV=the_env asset_fingerprint:symlinks:generate (WORK IN PROGRESS)
 
 The symlinks can also be generated at runtime, which is useful during
 development.

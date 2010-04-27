@@ -1,5 +1,5 @@
-require 'asset_fingerprint/symlinker'
 require 'asset_fingerprint/fingerprinter'
+require 'asset_fingerprint/path_rewriter'
 
 module ActionView
   module Helpers
@@ -53,42 +53,12 @@ module ActionView
         File.join(ASSETS_DIR, source)
       end
       
-      def fingerprint_in_query_string(source, asset_fingerprint)
-        source + "?#{asset_fingerprint}"
-      end
-      
-      def fingerprint_in_file_name(source, asset_fingerprint)
-        # Insert the fingerprinted string as part of the filename
-        # The -1 value causes the fingerprint to be appended, happens
-        # if there is no period in source.
-        # Example result if source = 'images/logo.png' the result would
-        # be "images/logo-fp-#{asset_fingerprint}.png"
-        fingerprint_index = source.rindex('.') || -1
-        fingerprinted_path = String.new(source).insert(fingerprint_index, "-fp-#{asset_fingerprint}")
-        AssetFingerprint::Symlinker.execute(source, fingerprinted_path)
-        fingerprinted_path
-      end
-      
       # Replaces the Rails method of the same name in AssetTagHelper.
       def rewrite_asset_path(source)
         asset_fingerprint = rails_asset_fingerprint(source)
-        if :query_string == @@asset_fingerprint_strategy[:path]
-          result = fingerprint_in_query_string(source, asset_fingerprint)
-        elsif :file_name == @@asset_fingerprint_strategy[:path]
-          result = fingerprint_in_file_name(source, asset_fingerprint)
-        else
-          raise RuntimeError.new "Unknown :path strategy '#{@@asset_fingerprint_strategy[:path]}'"
-        end
-        result = source if asset_fingerprint.blank?
-        result
+        AssetFingerprint.rewrite_asset_path(source, asset_fingerprint)
       end
        
-      def self.asset_fingerprint_strategy=(value)
-        @@asset_fingerprint_strategy = value
-      end
-      
-      @@asset_fingerprint_strategy = { :path => :query_string }
-      
     end
   end
 end
