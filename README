@@ -1,23 +1,43 @@
 AssetFingerprint
 ================
 Ruby on Rails plugin to fingerprint asset files using md5 checksum in filenames
-to improve cacheability compared to default Rails asset caching strategy.
+to improve cacheability compared to the default Rails asset caching strategy.
 
-Originally developed to improve the performance of MissedConnections.com.
+This plugin was developed from guidelines given by Google Page Speed:
+http://code.google.com/speed/page-speed/docs/caching.html
+
+Plugin alters AssetTagHelper so that all the relevant helper methods (image_path,
+image_tag, stylesheet_link_tag, etc.) all generate the correct fingerprinted URLs.
 
 Plugin can also be configured to use the default Rails asset caching strategy of 
 putting file timestamps in the query string.
 
-Based on guidelines recommended by Google Page Speed here:
-http://code.google.com/speed/page-speed/docs/caching.html
+File timestamps are not recommended as fingerprints as these are
+often inconsistent between deployments, even if a file has not changed, and so
+invalidates caches needlessly. Reasons for timestamp inconsistency include:
+  
+  * multiple app servers checking out files at different times
+  * git cannot preserve timestamps
+  * subversion not configured to preserve timestamps
+  * generated asset files (e.g. compressed css/js bundles)
+  
+In all these cases the md5 checksum does not change unless the file contents
+have changed, so using an asset file's md5 checksum as its fingerprint
+does not invalidate caches needlessly.
+
+Putting fingerprints in the query string is also not recommended as some
+caching proxies are allegedly incorrectly configured to ignore query string
+parameters. File name fingerprinting gets around this problem.
+
+Originally developed to improve the performance of MissedConnections.com.
 
 Rails Versions
 ==============
 Tested with Rails 2.2.3 though there's a good chance it'll work with earlier
 and newer versions with little or no modification.
 
-HOWTO
-=====
+Installation
+============
 Install the plugin at vendor/plugins/asset_fingerprint in your app.
 
 Create a config/initializers/asset_fingerprint.rb file and add these lines:
@@ -26,16 +46,66 @@ Create a config/initializers/asset_fingerprint.rb file and add these lines:
 require 'asset_fingerprint/asset_tag_helper'
 
 ActionView::Helpers::AssetTagHelper.asset_fingerprint_strategy = 
-  { :fingerprint => :timestamp, :path => :query_string }
+  { :fingerprint => :md5, :path => :file_name }
 
 # config/initializers/asset_fingerprint.rb end
 
 Change the asset_fingerprint_strategy in this initializer file to suit
 your needs. Set :fingerprint to :timestamp and :path to :query_string if
-you want the same behaviour that ships with Rails, however, recommended strategy
-is { :fingerprint => :md5, :path => :file_name } for maximum cacheability. 
+you want the same behaviour that ships with Rails, however, the recommended
+strategy is { :fingerprint => :md5, :path => :file_name } for maximum
+cacheability. 
 
-Copyright (c) 2010 Eliot Sykes, released under the MIT license
+If you're using file_name fingerprinting (recommended)
+======================================================
+file_name fingerprinting changes the file name of the asset paths generated
+by rails helpers such as image_tag, image_path, stylesheet_link_tag, etc.
 
+Your app will need to know which asset file to serve for a given fingerprinted
+file name as these fingerprinted file names do not correspond to a real file.
+
+Luckily getting your app to do this is simple in most cases, two options
+are presented below:
+
+Option 1 - Apache Rewrite Rule
+===============================
+Add *only* one of these rewrite rules to Apache to get it to serve asset files
+which are requested with fingerprinted file names.
+
+# For md5 file_name strategy: { :fingerprint => :md5, :path => :file_name }
+# md5 checksums are 32 characters long.
+RewriteRule ^(.+)-fp-[0-9a-z]{32}(.*)$ $1$2 [QSA,PT,L]
+
+-OR-
+
+# For timestamp file_name strategy: { :fingerprint => :timestamp, :path => :file_name }
+# You should check that the timestamps returned by your production operating
+# system are 10 digits long. If they are not, change the {10} in the regex
+# below to the correct length.
+RewriteRule ^(.+)-fp-[0-9]{10}(.*)$ $1$2 [QSA,PT,L]
+
+
+Option 2 - Generate fingerprint containing symlinks
+===================================================
+This option creates a symlink for each asset file, where the symlink is the
+fingerprinted filename, e.g. the asset file images/logo.png would get a symlink
+like images/logo-fp-1234567890.png pointing to it.
+
+The symlink option is recommended if you don't have Apache Rewrite module 
+available (for example you are using the Passenger module with the high
+performance option enabled which requires that Apache Rewrite is not used).
+
+To generate the symlinks at deployment time, e.g. in capistrano, call the
+following rake task:
+
+rake RAILS_ENV=the_env asset_fingerprint:symlinks:generate
+
+The symlinks can also be generated at runtime, which is useful during
+development.
+
+
+
+==============================================================
 More projects at http://blog.eliotsykes.com/my-projects/
-
+==============================================================
+Copyright (c) 2010 Eliot Sykes, released under the MIT license
