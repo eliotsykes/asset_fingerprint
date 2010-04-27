@@ -45,16 +45,19 @@ Create a config/initializers/asset_fingerprint.rb file and add these lines:
 # config/initializers/asset_fingerprint.rb start
 require 'asset_fingerprint/asset_tag_helper'
 
+AssetFingerprint.fingerprinter = :md5
+
 ActionView::Helpers::AssetTagHelper.asset_fingerprint_strategy = 
-  { :fingerprint => :md5, :path => :file_name }
+  { :path => :file_name }
 
 # config/initializers/asset_fingerprint.rb end
 
-Change the asset_fingerprint_strategy in this initializer file to suit
-your needs. Set :fingerprint to :timestamp and :path to :query_string if
+Configure this initializer file to suit your needs.
+
+Set fingerprinter to :timestamp and :path to :query_string if
 you want the same behaviour that ships with Rails, however, the recommended
-strategy is { :fingerprint => :md5, :path => :file_name } for maximum
-cacheability. 
+strategy is to use the :md5 fingerprinter and a :path value of :file_name for
+maximum cacheability. 
 
 If you're using file_name fingerprinting (recommended)
 ======================================================
@@ -72,13 +75,13 @@ Option 1 - Apache Rewrite Rule
 Add *only* one of these rewrite rules to Apache to get it to serve asset files
 which are requested with fingerprinted file names.
 
-# For md5 file_name strategy: { :fingerprint => :md5, :path => :file_name }
+# For md5 file_name strategy fingerprinter == :md5, :path == :file_name
 # md5 checksums are 32 characters long.
 RewriteRule ^(.+)-fp-[0-9a-z]{32}(.*)$ $1$2 [QSA,PT,L]
 
 -OR-
 
-# For timestamp file_name strategy: { :fingerprint => :timestamp, :path => :file_name }
+# For timestamp file_name strategy: fingerprinter == :timestamp, :path == :file_name }
 # You should check that the timestamps returned by your production operating
 # system are 10 digits long. If they are not, change the {10} in the regex
 # below to the correct length.

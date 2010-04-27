@@ -1,5 +1,5 @@
-require 'digest/md5'
 require 'asset_fingerprint/symlinker'
+require 'asset_fingerprint/fingerprinter'
 
 module ActionView
   module Helpers
@@ -36,8 +36,8 @@ module ActionView
             asset_fingerprint
           else
             path = AssetTagHelper.abs_path_to_asset(source)
-            asset_fingerprint = calculate_asset_fingerprint(path)
-    
+            asset_fingerprint = AssetFingerprint.calculate_fingerprint(path)
+            
             if AssetTagHelper.cache_asset_fingerprints
               @@asset_fingerprints_cache_guard.synchronize do
                 @@asset_fingerprints_cache[source] = asset_fingerprint
@@ -82,33 +82,13 @@ module ActionView
         result = source if asset_fingerprint.blank?
         result
       end
-      
-      # Use this to set how fingerprints are calculated and how the
-      # fingerprints are put into the asset path.
-      # 
-      # Default strategy is as follows:
-      # {:fingerprint => :timestamp, :path => :query_string}
-      #
-      # Valid :fingerprint values are :timestamp, :md5
-      # Valid :path values are :query_string, :file_name 
+       
       def self.asset_fingerprint_strategy=(value)
         @@asset_fingerprint_strategy = value
       end
       
-      @@asset_fingerprint_strategy = { :fingerprint => :timestamp, :path => :query_string }
+      @@asset_fingerprint_strategy = { :path => :query_string }
       
-      # This is where the asset fingerprint is calculated, where the path
-      # argument is the path to the asset file.
-      def calculate_asset_fingerprint(path)
-        if :timestamp == @@asset_fingerprint_strategy[:fingerprint]
-          return File.exist?(path) ? File.mtime(path).to_i.to_s : ''
-        elsif :md5 == @@asset_fingerprint_strategy[:fingerprint]
-          return Digest::MD5.hexdigest(File.read(path))
-        else
-          raise RuntimeError.new "Unknown :fingerprint strategy '#{@@asset_fingerprint_strategy[:fingerprint]}'"
-        end
-      end
-    
     end
   end
 end
