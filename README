@@ -1,35 +1,45 @@
 AssetFingerprint
 ================
-Ruby on Rails plugin to fingerprint asset files using md5 checksum in filenames
-to improve cacheability compared to the default Rails asset caching strategy.
+Ruby on Rails plugin to fingerprint asset files using md5 checksum (or timestamp
+or anything else) in file names to improve cacheability compared to the default
+Rails asset caching strategy.
+
+So instead of asset paths like '/images/logo.png?1234567890' you get fingerprinted
+asset paths like '/images/logo-fp-839b180ff39a24f8d6e0ee70e4c40fed.png' with no
+query string.
+
+The server knows how to handle the fingerprinted asset paths using rewrite rules
+or symlinks (explained below).
 
 This plugin was developed from guidelines given by Google Page Speed:
 http://code.google.com/speed/page-speed/docs/caching.html
 
-Plugin alters AssetTagHelper so that all the relevant helper methods (image_path,
+The plugin alters AssetTagHelper so that all the relevant helper methods (image_path,
 image_tag, stylesheet_link_tag, etc.) all generate the correct fingerprinted URLs.
 
 Plugin can also be configured to use the default Rails asset caching strategy of 
-putting file timestamps in the query string.
+putting file timestamps in the query string. This was added in case you
+want to slowly introduce this plugin into your app.
 
 File timestamps are not recommended as fingerprints as these are
-often inconsistent between deployments, even if a file has not changed, and so
-invalidates caches needlessly. Reasons for timestamp inconsistency include:
+often inconsistent between deployments when a file has not changed. This means
+your app may not take full advantage of asset caching. Reasons for timestamp
+inconsistency include:
   
   * multiple app servers checking out files at different times
-  * git cannot preserve timestamps
-  * subversion not configured to preserve timestamps
+  * git does not preserve file timestamps (it really doesn't)
+  * subversion not configured to preserve file timestamps
   * generated asset files (e.g. compressed css/js bundles)
   
 In all these cases the md5 checksum does not change unless the file contents
 have changed, so using an asset file's md5 checksum as its fingerprint
-does not invalidate caches needlessly.
+is often a better option than a file timestamp.
 
 Putting fingerprints in the query string is also not recommended as some
 caching proxies are allegedly incorrectly configured to ignore query string
 parameters. File name fingerprinting gets around this problem.
 
-Originally developed to improve the performance of MissedConnections.com.
+This plugin is in use on MissedConnections.com.
 
 Rails Versions
 ==============
@@ -46,9 +56,10 @@ Create a config/initializers/asset_fingerprint.rb file and add these lines:
 
 require 'asset_fingerprint/asset_tag_helper'
 
+# Valid fingerprinter values are :md5, :timestamp, or your own class
 AssetFingerprint.fingerprinter = :md5
+# Valid path_rewriter values are :file_name, :query_string, or your own class
 AssetFingerprint.path_rewriter = :file_name
-AssetFingerprint.symlink_on_the_fly = true
 
 # config/initializers/asset_fingerprint.rb end
 
@@ -59,7 +70,7 @@ you want the same behaviour that ships with Rails, however, the recommended
 strategy is to use the :md5 fingerprinter and the :file_name path_rewriter for
 maximum cacheability. 
 
-If you're using file_name fingerprinting (recommended)
+If you're using file_name path rewriting (recommended)
 ======================================================
 The :file_name path rewriter changes the file name of the asset paths generated
 by rails helpers such as image_tag, image_path, stylesheet_link_tag, etc.
@@ -68,12 +79,24 @@ Your app will need to know which asset file to serve for a given rewritten
 file path as the rewritten paths do not correspond to a real file.
 
 Luckily getting your app to do this is simple in most cases, two options
-are presented below:
+are presented below, an apache rewrite option and a symlink option.
+
+You can use both methods for different environments, for example I use the
+apache rewrite option in development to save muddying my dev environment with
+lots of symlinks, but go with the symlink option in production so I can
+use Passenger's high performance option (it requires that Apache Rewrite is
+not used).
+
 
 Option 1 - Apache Rewrite Rule
 ===============================
-Add *only* one of these rewrite rules to Apache to get it to serve asset files
-with rewritten file names..
+If you decide to use the Apache Rewrite Rule method, then add this line to
+the initializer script to disable the symlink_on_the_fly setting:
+
+AssetFingerprint.symlink_on_the_fly = false
+
+Then add *only* one of these rewrite rules to Apache to get it to serve asset
+files with rewritten file names..
 
 # For md5 file_name strategy fingerprinter == :md5, path_rewriter == :file_name
 # md5 checksums are 32 characters long.
@@ -102,21 +125,38 @@ performance option enabled which requires that Apache Rewrite is not used).
 To generate the symlinks at deployment time, e.g. in capistrano, call the
 following rake task:
 
-rake RAILS_ENV=the_env asset_fingerprint:symlinks:generate (WORK IN PROGRESS)
+rake asset_fingerprint:symlinks:generate RAILS_ENV=the_env
 
-The symlinks can also be generated at runtime, which is useful during
+Also add these settings to your initializer script:
+
+# We don't want to generate symlinks as they are not needed.
+AssetFingerprint.symlink_on_the_fly = false
+# asset_paths uses sensible defaults (see DEFAULT_ASSET_PATHS), however if you
+# have a my-custom-dir with assets in it then you'll want to specify it below.
+AssetFingerprint.asset_paths = ['favicon.ico', 'images', 'javascripts', 'stylesheets', 'my-custom-dir']
+
+Using the rake task is recommended to save the overhead of generating the symlinks
+on the fly during user requests in a production environment.
+
+The AssetFingerprint.asset_paths setting is used by the rake task to decide
+which files to symlink. If you specify directories, it will search them recursively
+symlinking as it goes.
+
+Saying that, the symlinks can be generated on-the-fly, which is useful during
 development. So the plugin works out-of-the-box, this option is enabled
-by default.
+by default. Be aware that this will cause symlinks to be generated in
+your development environment (take care not to commit the symlinks to your
+repository) until you set AssetFingerprint.symlink_on_the_fly to false. 
 
-*TIP* If you're trying the symlink option out and afterward want to remove all
-      symlinks from the public directory, you can use this command:
+*TIP* If you're trying the symlink option out and afterward want to remove only
+      symlinks from the public directory, you can use this command in your
+      app root directory:
       
       shell> find public/ -type l -exec rm -i {} \;
       
       Remove the -i option if you don't want to be prompted to delete each
       symbolic link. Be careful using this as you may delete symlinks
       you did not want to.
-
 
 
 ==============================================================

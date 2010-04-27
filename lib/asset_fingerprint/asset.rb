@@ -4,6 +4,23 @@ require 'asset_fingerprint/path_rewriter'
 
 module AssetFingerprint
   
+  DEFAULT_ASSET_PATHS = ['favicon.ico', 'images', 'javascripts', 'stylesheets']
+  @@asset_paths = DEFAULT_ASSET_PATHS
+    
+  # Used for rake task to generate symlinks.
+  #
+  # Set asset_paths if you have different paths to those given in
+  # DEFAULT_ASSET_PATHS. These are relative to the public/ directory and
+  # can be filenames or directories. Directories will be searched recursively
+  # when generating symlinks.
+  def self.asset_paths=(value)
+    @@asset_paths = value
+  end
+  
+  def self.asset_paths
+    @@asset_paths
+  end
+  
   class Asset
     
     def self.cache_enabled?
@@ -33,6 +50,16 @@ module AssetFingerprint
     @@cache_guard = Mutex.new
     
     attr_accessor :source 
+    
+    def self.create_from_absolute_path(path)
+      source = to_relative(path)
+      create(source)
+    end
+    
+    def self.to_relative(absolute_path)
+      path_to_assets = ActionView::Helpers::AssetTagHelper::ASSETS_DIR + File::SEPARATOR
+      absolute_path.sub(path_to_assets, '')
+    end
     
     def self.create(source)
       asset = @@cache[source] if cache_enabled?
@@ -99,16 +126,21 @@ module AssetFingerprint
     end
    
     def self.generate_all_symlinks
-      #assets = ['favicon.ico', 'downloads', 'images', 'javascripts', 'stylesheets']
-      paths = ['favicon.ico', 'downloads']
-      paths.each do |source|
+      AssetFingerprint.asset_paths.each do |source|
         absolute_path = Asset.absolute_path(source)
-        if File.file?(absolute_path)
-          asset = Asset.new(source)
-          asset.build_symlink
+        generate_symlinks(absolute_path)
+      end
+    end
+    
+    def self.generate_symlinks(path)
+      if File.file?(path)
+        asset = Asset.create_from_absolute_path(path)
+        asset.build_symlink
+      elsif File.directory?(path)
+        Dir[File.join(path, '*')].each do |file_or_dir|
+          generate_symlinks(file_or_dir)
         end
       end
-      #Dir['config/recipes/*.rb'].each { |recipe| load(recipe) }
     end
     
   end
