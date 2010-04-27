@@ -1,5 +1,4 @@
-require 'asset_fingerprint/fingerprinter'
-require 'asset_fingerprint/path_rewriter'
+require 'asset_fingerprint/asset'
 
 module ActionView
   module Helpers

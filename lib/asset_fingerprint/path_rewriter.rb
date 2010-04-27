@@ -1,11 +1,7 @@
-require 'asset_fingerprint/symlinker'
-
 module AssetFingerprint
   
   def self.rewrite_asset_path(source)
-    asset_fingerprint = get_asset_fingerprint(source)
-    return source if asset_fingerprint.blank?
-    path_rewriter.rewrite(source, asset_fingerprint)
+    (AssetFingerprint::Asset.create(source)).fingerprinted_path    
   end
     
   def self.path_rewriter=(value)
@@ -24,28 +20,23 @@ module AssetFingerprint
   
   module FileNamePathRewriter
     
-    def self.rewrite(source, asset_fingerprint)
-      fingerprinted_path = build_fingerprinted_path(source, asset_fingerprint)
-      AssetFingerprint::Symlinker.execute(source, fingerprinted_path)
-      fingerprinted_path
-    end
-    
-    def self.build_fingerprinted_path(source, asset_fingerprint)
+    def self.populate_fingerprinted_path(asset)
       # Insert the fingerprinted string as part of the filename
       # The -1 value causes the fingerprint to be appended, happens
       # if there is no period in source.
       # Example result if source = 'images/logo.png' the result would
       # be "images/logo-fp-#{asset_fingerprint}.png"
-      fingerprint_index = source.rindex('.') || -1
-      String.new(source).insert(fingerprint_index, "-fp-#{asset_fingerprint}")
+      fingerprint_index = asset.source.rindex('.') || -1
+      asset.fingerprinted_path = String.new(asset.source).insert(fingerprint_index, "-fp-#{asset.fingerprint}")
+      AssetFingerprint::Symlinker.execute(asset)
     end
     
   end
   
   module QueryStringPathRewriter
     
-    def self.rewrite(source, asset_fingerprint)
-      source + "?#{asset_fingerprint}"
+    def self.populate_fingerprinted_path(asset)
+      asset.fingerprinted_path = asset.source + "?#{asset.fingerprint}"
     end
     
   end

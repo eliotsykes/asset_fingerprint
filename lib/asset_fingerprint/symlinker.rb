@@ -1,22 +1,7 @@
 module AssetFingerprint
-
-  # Create fingerprinted symlinks for all assets.  
-  def self.generate_all_symlinks
-    #assets = ['favicon.ico', 'downloads', 'images', 'javascripts', 'stylesheets']
-    assets = ['favicon.ico', 'downloads']
-    assets.each do |source|
-      path = abs_path_to_asset(source)
-      if File.file?(path)
-        AssetFingerprint.generate_symlink(source)
-      end
-    end
-    #Dir['config/recipes/*.rb'].each { |recipe| load(recipe) }
-  end
   
-  def self.generate_symlink(source)
-    asset_fingerprint = get_asset_fingerprint(source)
-    fingerprinted_path = FileNamePathRewriter.build_fingerprinted_path(source, asset_fingerprint)
-    AssetFingerprint::Symlinker.force_execute(source, fingerprinted_path)
+  def self.generate_all_symlinks
+    Asset.generate_all_symlinks
   end
   
   @@symlink_on_the_fly = true
@@ -32,18 +17,18 @@ module AssetFingerprint
     
     @@symlinked = []
     
-    def self.execute(source, fingerprinted_path)
+    def self.execute(asset)
       return unless enabled?
-      unless already_symlinked?(fingerprinted_path)
-        force_execute(source, fingerprinted_path)
-        @@symlinked << fingerprinted_path
+      unless already_symlinked?(asset.fingerprinted_path)
+        symlink_done = force_execute(asset)
+        @@symlinked << asset.fingerprinted_path if symlink_done
       end
     end
     
-    def self.force_execute(source, fingerprinted_path)
-      abs_source_path = AssetFingerprint.abs_path_to_asset(source)
-      abs_fingerprinted_path  = AssetFingerprint.abs_path_to_asset(fingerprinted_path)
-      FileUtils.ln_sf(abs_source_path, abs_fingerprinted_path)
+    def self.force_execute(asset)
+      return false unless asset.symlinkable?
+      FileUtils.ln_sf(asset.source_absolute_path, asset.fingerprinted_absolute_path)
+      true
     end
     
     def self.already_symlinked?(fingerprinted_path)
