@@ -1,4 +1,5 @@
 require 'digest/md5'
+require 'asset_fingerprint/symlinker'
 
 module ActionView
   module Helpers
@@ -34,7 +35,7 @@ module ActionView
           if AssetTagHelper.cache_asset_fingerprints && (asset_fingerprint = @@asset_fingerprints_cache[source])
             asset_fingerprint
           else
-            path = File.join(ASSETS_DIR, source)
+            path = AssetTagHelper.abs_path_to_asset(source)
             asset_fingerprint = calculate_asset_fingerprint(path)
     
             if AssetTagHelper.cache_asset_fingerprints
@@ -48,6 +49,10 @@ module ActionView
         end
       end
       
+      def self.abs_path_to_asset(source)
+        File.join(ASSETS_DIR, source)
+      end
+      
       def fingerprint_in_query_string(source, asset_fingerprint)
         source + "?#{asset_fingerprint}"
       end
@@ -59,7 +64,9 @@ module ActionView
         # Example result if source = 'images/logo.png' the result would
         # be "images/logo-fp-#{asset_fingerprint}.png"
         fingerprint_index = source.rindex('.') || -1
-        String.new(source).insert(fingerprint_index, "-fp-#{asset_fingerprint}")
+        fingerprinted_path = String.new(source).insert(fingerprint_index, "-fp-#{asset_fingerprint}")
+        AssetFingerprint::Symlinker.execute(source, fingerprinted_path)
+        fingerprinted_path
       end
       
       # Replaces the Rails method of the same name in AssetTagHelper.
