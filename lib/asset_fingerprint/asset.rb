@@ -1,3 +1,4 @@
+require 'asset_fingerprint/asset_files_served_by'
 require 'asset_fingerprint/symlinker'
 require 'asset_fingerprint/fingerprinter'
 require 'asset_fingerprint/path_rewriter'
@@ -51,17 +52,29 @@ module AssetFingerprint
     
     attr_accessor :source 
     
-    def self.create_from_absolute_path(path)
-      source = to_relative(path)
-      create(source)
+    PATH_TO_ASSETS = ActionView::Helpers::AssetTagHelper::ASSETS_DIR + File::SEPARATOR
+    
+    def self.absolute_path?(source_or_absolute_path)
+      # Returns true if the given argument begins with the absolute path of the
+      # assets dir.
+      0 == source_or_absolute_path.index(PATH_TO_ASSETS)
     end
     
     def self.to_relative(absolute_path)
-      path_to_assets = ActionView::Helpers::AssetTagHelper::ASSETS_DIR + File::SEPARATOR
-      absolute_path.sub(path_to_assets, '')
+      absolute_path.sub(PATH_TO_ASSETS, '')
     end
     
-    def self.create(source)
+    def self.normalize_to_source(source_or_absolute_path)
+      if absolute_path?(source_or_absolute_path)
+        source = to_relative(source_or_absolute_path)
+      else
+        source = source_or_absolute_path
+      end
+      source
+    end
+    
+    def self.create(source_or_absolute_path)
+      source = normalize_to_source(source_or_absolute_path)
       asset = @@cache[source] if cache_enabled?
       asset = Asset.new(source) if asset.nil?
       asset
@@ -118,13 +131,18 @@ module AssetFingerprint
     end
     
     def build_symlink
-      AssetFingerprint::Symlinker.force_execute(self)
+      AssetFingerprint::Symlinker.execute(self)
+    end
+    
+    def build_symlink_on_the_fly
+      AssetFingerprint::Symlinker.symlink_on_the_fly(self)
     end
     
     def symlinkable?
-      path_rewriter == FileNamePathRewriter
+      (AssetFingerprint.path_rewriter.fingerprinted_paths_symlinkable? &&
+        AssetFingerprint.asset_files_served_by_symlink?)
     end
-   
+    
     def self.generate_all_symlinks
       AssetFingerprint.asset_paths.each do |source|
         absolute_path = Asset.absolute_path(source)
@@ -134,7 +152,7 @@ module AssetFingerprint
     
     def self.generate_symlinks(path)
       if File.file?(path)
-        asset = Asset.create_from_absolute_path(path)
+        asset = Asset.create(path)
         asset.build_symlink
       elsif File.directory?(path)
         Dir[File.join(path, '*')].each do |file_or_dir|

@@ -17,26 +17,20 @@ module AssetFingerprint
     
     @@symlinked = []
     
+    def self.symlink_on_the_fly(asset)
+      return unless AssetFingerprint.symlink_on_the_fly?
+      execute(asset)
+    end
+    
     def self.execute(asset)
-      return unless enabled?
-      unless already_symlinked?(asset.fingerprinted_path)
-        symlink_done = force_execute(asset)
+      if asset.symlinkable? && !already_symlinked?(asset.fingerprinted_path)
+        FileUtils.ln_sf(asset.source_absolute_path, asset.fingerprinted_absolute_path)
         @@symlinked << asset.fingerprinted_path if symlink_done
       end
     end
     
-    def self.force_execute(asset)
-      return false unless asset.symlinkable?
-      FileUtils.ln_sf(asset.source_absolute_path, asset.fingerprinted_absolute_path)
-      true
-    end
-    
     def self.already_symlinked?(fingerprinted_path)
       @@symlinked.include?(fingerprinted_path)
-    end
-    
-    def self.enabled?
-      AssetFingerprint.symlink_on_the_fly?
     end
     
   end
