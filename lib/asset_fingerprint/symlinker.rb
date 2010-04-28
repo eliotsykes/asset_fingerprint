@@ -25,7 +25,7 @@ module AssetFingerprint
     def self.execute(asset)
       if asset.symlinkable? && !already_symlinked?(asset.fingerprinted_path)
         FileUtils.ln_sf(asset.source_absolute_path, asset.fingerprinted_absolute_path)
-        @@symlinked << asset.fingerprinted_path if symlink_done
+        @@symlinked << asset.fingerprinted_path
       end
     end
     
