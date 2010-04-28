@@ -16,7 +16,13 @@ module ActionView
         AssetFingerprint.fire_new_asset_file_event(joined_asset_path)
       end
       alias_method_chain :write_asset_file_contents, :fire_new_asset_file_event
-     
+      
+      def asset_file_path_with_remove_fingerprint(path)
+        path = AssetFingerprint.path_rewriter.remove_fingerprint(path)
+        asset_file_path_without_remove_fingerprint(path)
+      end
+      alias_method_chain :asset_file_path, :remove_fingerprint
+      
     end
   end
 end

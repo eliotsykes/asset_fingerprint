@@ -1,4 +1,5 @@
 require 'asset_fingerprint/asset_files_served_by'
+require 'asset_fingerprint/event_handling'
 require 'asset_fingerprint/symlinker'
 require 'asset_fingerprint/fingerprinter'
 require 'asset_fingerprint/path_rewriter'

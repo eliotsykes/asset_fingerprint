@@ -17,6 +17,22 @@ module AssetFingerprint
       true
     end
     
+    def self.remove_fingerprint(path)
+      return path unless path.include?('-fp-')
+      path_components = path.split('-fp-')
+      prefix = path_components.first
+      fingerprint_and_ext = path_components.last
+      if !fingerprint_and_ext.blank? && fingerprint_and_ext.include?('.')
+        # There is a file extension
+        ext = fingerprint_and_ext.split('.').last
+      end
+      if ext.blank?
+        return prefix
+      else
+        return "#{prefix}.#{ext}"
+      end
+    end
+    
   end
   
   module QueryStringPathRewriter
@@ -29,6 +45,9 @@ module AssetFingerprint
       false
     end
     
+    def self.remove_fingerprint(path)
+      path.split('?').first          
+    end
   end
   
   def self.rewrite_asset_path(source)
