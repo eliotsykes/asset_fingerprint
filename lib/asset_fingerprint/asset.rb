@@ -3,6 +3,7 @@ require 'asset_fingerprint/event_handling'
 require 'asset_fingerprint/symlinker'
 require 'asset_fingerprint/fingerprinter'
 require 'asset_fingerprint/path_rewriter'
+require 'action_view/helpers'
 
 module AssetFingerprint
   
@@ -66,6 +67,10 @@ module AssetFingerprint
     end
     
     def self.normalize_to_source(source_or_absolute_path)
+      # Rails will sometimes feed a query string through here,
+      # e.g. image_path('pic.gif', :mouseover => 'foo.gif')
+      # so chop off the query string.
+      source_or_absolute_path = source_or_absolute_path.split('?').first
       if absolute_path?(source_or_absolute_path)
         source = to_relative(source_or_absolute_path)
       else
