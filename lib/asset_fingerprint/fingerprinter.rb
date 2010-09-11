@@ -6,6 +6,8 @@ module AssetFingerprint
     
     def self.fingerprint(asset)
       return ENV["RAILS_ASSET_ID"] if ENV["RAILS_ASSET_ID"]
+      path = asset.source_absolute_path
+      return '' unless File.exist?(path)
       build_fingerprint(asset)
     end
     
