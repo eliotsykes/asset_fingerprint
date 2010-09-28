@@ -172,6 +172,15 @@ shell> find public/ -type l -exec rm -i {} \;
 Remove the -i option if you don't want to be prompted to delete each symbolic
 link. Be careful using this as you may delete symlinks you did not want to.
 
+--
+If for some reason you don't want to use the fingerprinted path for some of your assets,
+you can edit the excludes configuration:
+
+AssetFingerprint.excludes = ['^bootstrap'] # defaults to an empty array
+
+This is a list of regular expression to check. If any matches your asset's path,
+then that file will not be fingeprinted.
+
 
 ==============================================================
 More projects at http://blog.eliotsykes.com/my-projects/

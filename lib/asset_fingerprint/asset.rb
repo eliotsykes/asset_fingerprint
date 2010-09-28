@@ -9,7 +9,8 @@ module AssetFingerprint
   
   DEFAULT_ASSET_PATHS = ['favicon.ico', 'images', 'javascripts', 'stylesheets']
   @@asset_paths = DEFAULT_ASSET_PATHS
-    
+  @@excludes = []
+
   # Used for rake task to generate symlinks.
   #
   # Set asset_paths if you have different paths to those given in
@@ -22,6 +23,14 @@ module AssetFingerprint
   
   def self.asset_paths
     @@asset_paths
+  end
+
+  def self.excludes=(value)
+    @@excludes = value
+  end
+  
+  def self.excludes
+    @@excludes
   end
   
   class Asset
@@ -110,6 +119,12 @@ module AssetFingerprint
     def fingerprint
       @fingerprint ||= fingerprinter.fingerprint(self)
     end
+
+    def fingerprintable?
+      @fingerprintable ||= !AssetFingerprint.excludes.map do |p|
+        self.source.match(/#{p}/)
+      end.any?
+    end
     
     def path_rewriter
       AssetFingerprint.path_rewriter
@@ -128,8 +143,12 @@ module AssetFingerprint
     end
     
     def fingerprinted_path
-      populate_fingerprinted_path unless @fingerprinted_path
-      @fingerprinted_path
+      if fingerprintable?
+        populate_fingerprinted_path unless @fingerprinted_path
+        @fingerprinted_path
+      else
+        self.source
+      end
     end
     
     def fingerprinted_absolute_path
