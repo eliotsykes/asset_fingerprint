@@ -34,7 +34,7 @@ module AssetFingerprint
     end
     
     def self.already_symlinked?(fingerprinted_path)
-      @@symlinked.include?(fingerprinted_path)
+      @@symlinked.include?(fingerprinted_path) && File.exists?(fingerprinted_path)
     end
     
   end
