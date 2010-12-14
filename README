@@ -158,20 +158,18 @@ on the fly during user requests in a production environment.
 Tips
 ====
 --
+To remove the generated symlinks call:
+
+rake asset_fingerprint:symlinks:purge
+--
 By default the plugin will cause symlinks to be generated in your development
 environment (take care not to commit the symlinks to your repository) until 
 you set AssetFingerprint.symlink_on_the_fly to false. 
 
---
-If you're trying the symlink option out and afterward want to remove only
-symlinks from the public directory, you can use this command in your app root
-directory:
 
-shell> find public/ -type l -exec rm -i {} \;
-
-Remove the -i option if you don't want to be prompted to delete each symbolic
-link. Be careful using this as you may delete symlinks you did not want to.
-
+CONTRIBUTORS:
+Eliot Sykes http://github.com/eliotsykes
+Evan Worley http://github.com/thecypher
 
 ==============================================================
 More projects at http://blog.eliotsykes.com/my-projects/
