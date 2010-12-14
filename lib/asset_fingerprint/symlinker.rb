@@ -3,6 +3,10 @@ module AssetFingerprint
   def self.generate_all_symlinks
     Asset.generate_all_symlinks
   end
+
+  def self.remove_all_symlinks
+    Asset.remove_all_symlinks
+  end
   
   @@symlink_on_the_fly = true
   def self.symlink_on_the_fly=(value)

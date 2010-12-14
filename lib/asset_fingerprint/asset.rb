@@ -7,6 +7,8 @@ require 'action_view/helpers'
 
 module AssetFingerprint
   
+  FINGER_PRINTED_FILE_PATTERN = /.+-fp-[0-9a-zA-Z]+.+/
+
   DEFAULT_ASSET_PATHS = ['favicon.ico', 'images', 'javascripts', 'stylesheets']
   @@asset_paths = DEFAULT_ASSET_PATHS
     
@@ -155,7 +157,19 @@ module AssetFingerprint
         generate_symlinks(absolute_path)
       end
     end
-    
+
+    def self.remove_all_symlinks(sources = nil)
+      sources ||= [ActionView::Helpers::AssetTagHelper::ASSETS_DIR]
+
+      sources.each do |source|
+        if File.directory?(source)
+          remove_all_symlinks(Dir.glob(File.join(source, "*")))
+        elsif File.symlink?(source) && File.basename(source) =~ FINGER_PRINTED_FILE_PATTERN
+          File.delete(source)
+        end
+      end
+    end
+
     def self.generate_symlinks(path)
       if File.file?(path)
         asset = Asset.create(path)
