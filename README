@@ -126,6 +126,20 @@ like images/logo-fp-1234567890.png pointing to it.
 The symlink option is recommended if you think symlinks will give you better
 performance than rewrite rules.
 
+By default symlinks are generated in the same directory as the asset that
+they link to. In some environments, it may be advantageous to generate
+all of the symlinks into a different base directory. This can be configured
+by adding the following line to yourconfig/initializers/asset_fingerprint.rb 
+file. This will cause all generated symlinks to be placed in 
+public/fingerprinted_assets, which will parallel the directory structure
+of public/. For example public/images/foo.jpg will have a fingerprinted
+asset symlink in 
+public/fingerprinted_assets/images/foo-fp-77f3c63bea170a3b5ba5d598364efcdb.png.
+This option can be useful in your development enviornment, in conjunction with
+source control ignore properties (such as svn:ignore).
+
+AssetFingerprint.symlink_output_dir = "fingerprinted_assets"
+
 By default, the plugin generates symlinks on-the-fly, however you can
 generate all the symlinks ahead of time at deployment via a rake task.
 
