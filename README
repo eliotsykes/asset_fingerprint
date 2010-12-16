@@ -134,6 +134,7 @@ public/fingerprinted_assets/images/foo-fp-77f3c63bea170a3b5ba5d598364efcdb.png.
 This option can be useful in your development enviornment, in conjunction with
 source control ignore properties (such as svn:ignore).
 
+# Put this in config/initializers/asset_fingerprint.rb
 AssetFingerprint.symlink_output_dir = "fingerprinted_assets"
 
 By default, the plugin generates symlinks on-the-fly, however you can
