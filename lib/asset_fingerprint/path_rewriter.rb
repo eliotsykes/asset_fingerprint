@@ -9,7 +9,15 @@ module AssetFingerprint
       # Example result if source = 'images/logo.png' the result would
       # be "images/logo-fp-#{asset_fingerprint}.png"
       fingerprint_index = asset.source.rindex('.') || -1
-      asset.fingerprinted_path = String.new(asset.source).insert(fingerprint_index, "-fp-#{asset.fingerprint}")
+
+      fp_path = String.new(asset.source).insert(fingerprint_index, "-fp-#{asset.fingerprint}")
+
+      # Prepend the custom symlink_output_dir if present
+      unless AssetFingerprint.symlink_output_dir.empty?
+        fp_path = File.join(AssetFingerprint.symlink_output_dir, fp_path) 
+      end
+
+      asset.fingerprinted_path = fp_path
       asset.build_symlink_on_the_fly
     end
     
