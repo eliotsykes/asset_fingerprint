@@ -11,6 +11,8 @@ module AssetFingerprint
 
   DEFAULT_ASSET_PATHS = ['favicon.ico', 'images', 'javascripts', 'stylesheets']
   @@asset_paths = DEFAULT_ASSET_PATHS
+
+  @@symlink_output_dir = ""
     
   # Used for rake task to generate symlinks.
   #
@@ -24,6 +26,22 @@ module AssetFingerprint
   
   def self.asset_paths
     @@asset_paths
+  end
+
+  # The relative path used as output directory for the fingerprinted asset symlinks, relative 
+  # to public directory.
+  #
+  # Set symlink_output_dir if you wish to generate the symlinks into a different base directory. 
+  # The structure will mirror your public directory structure. This is useful if you want to use 
+  # svn:ignore to ignore an entire directory, as currently the svn:ignore does not support regular
+  # expressions.
+  #
+  def self.symlink_output_dir=(value)
+    @@symlink_output_dir = value
+  end
+
+  def self.symlink_output_dir
+    @@symlink_output_dir
   end
   
   class Asset
@@ -163,7 +181,7 @@ module AssetFingerprint
     end
 
     def self.remove_all_symlinks(sources = nil)
-      sources ||= [ActionView::Helpers::AssetTagHelper::ASSETS_DIR]
+      sources ||= [File.join(ActionView::Helpers::AssetTagHelper::ASSETS_DIR, AssetFingerprint.symlink_output_dir)]
 
       sources.each do |source|
         if File.directory?(source)
