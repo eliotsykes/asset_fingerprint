@@ -38,6 +38,11 @@ module AssetFingerprint
   #
   def self.symlink_output_dir=(value)
     @@symlink_output_dir = value
+
+    # prefix the output dir with a leading slash for proper path generation
+    if @@symlink_output_dir.index(File::SEPARATOR) != 0
+      @@symlink_output_dir = File::SEPARATOR + @@symlink_output_dir
+    end
   end
 
   def self.symlink_output_dir
