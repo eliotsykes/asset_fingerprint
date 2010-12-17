@@ -13,8 +13,10 @@ module AssetFingerprint
       path = String.new(asset.source).insert(fingerprint_index, "-fp-#{asset.fingerprint}")
       prepend_sep = path.index(File::SEPARATOR) == 0
 
-      path = File.join(AssetFingerprint.symlink_output_dir, path)
-      path = File::SEPARATOR + path if prepend_sep
+      unless AssetFingerprint.symlink_output_dir.empty?
+        path = File.join(AssetFingerprint.symlink_output_dir, path)
+        path = File::SEPARATOR + path if prepend_sep
+      end
 
       asset.fingerprinted_path = path
       asset.build_symlink_on_the_fly
