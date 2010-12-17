@@ -125,7 +125,9 @@ module AssetFingerprint
     end
     
     def self.absolute_path(relative_path)
-      File.join(ActionView::Helpers::AssetTagHelper::ASSETS_DIR, relative_path)
+      asset_dir = File.join(ActionView::Helpers::AssetTagHelper::ASSETS_DIR, 
+                             AssetFingerprint.symlink_output_dir)
+      File.join(asset_dir, relative_path)
     end
     
     def source_absolute_path
