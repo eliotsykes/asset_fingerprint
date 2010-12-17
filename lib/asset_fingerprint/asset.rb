@@ -38,11 +38,6 @@ module AssetFingerprint
   #
   def self.symlink_output_dir=(value)
     @@symlink_output_dir = value
-
-    # prefix the output dir with a leading slash for proper path generation
-    if @@symlink_output_dir.index(File::SEPARATOR) != 0
-      @@symlink_output_dir = File::SEPARATOR + @@symlink_output_dir
-    end
   end
 
   def self.symlink_output_dir
@@ -125,9 +120,7 @@ module AssetFingerprint
     end
     
     def self.absolute_path(relative_path)
-      asset_dir = File.join(ActionView::Helpers::AssetTagHelper::ASSETS_DIR, 
-                             AssetFingerprint.symlink_output_dir)
-      File.join(asset_dir, relative_path)
+      File.join(ActionView::Helpers::AssetTagHelper::ASSETS_DIR, relative_path)
     end
     
     def source_absolute_path

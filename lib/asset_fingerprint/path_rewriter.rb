@@ -10,7 +10,13 @@ module AssetFingerprint
       # be "images/logo-fp-#{asset_fingerprint}.png"
       fingerprint_index = asset.source.rindex('.') || -1
 
-      asset.fingerprinted_path = String.new(asset.source).insert(fingerprint_index, "-fp-#{asset.fingerprint}")
+      path = String.new(asset.source).insert(fingerprint_index, "-fp-#{asset.fingerprint}")
+      prepend_sep = path.index(File::SEPARATOR) == 0
+
+      path = File.join(AssetFingerprint.symlink_output_dir, path)
+      path = File::SEPARATOR + path if prepend_sep
+
+      asset.fingerprinted_path = path
       asset.build_symlink_on_the_fly
     end
     
@@ -20,6 +26,14 @@ module AssetFingerprint
     
     def self.remove_fingerprint(path)
       return path unless path.include?('-fp-')
+
+      # Remove the symlink output directory from the path
+      unless AssetFingerprint.symlink_output_dir.empty?
+        prefix = path.index(File::SEPARATOR) == 0 ? File::SEPARATOR : ''
+        prefix += AssetFingerprint.symlink_output_dir
+        path.sub!(prefix, '')
+      end
+
       path_components = path.split('-fp-')
       prefix = path_components.first
       fingerprint_and_ext = path_components.last
