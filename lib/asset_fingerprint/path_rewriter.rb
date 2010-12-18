@@ -33,7 +33,7 @@ module AssetFingerprint
       unless AssetFingerprint.symlink_output_dir.empty?
         prefix = path.index(File::SEPARATOR) == 0 ? File::SEPARATOR : ''
         prefix += AssetFingerprint.symlink_output_dir
-        path.sub!(prefix, '')
+        path = path.sub(prefix, '')
       end
 
       path_components = path.split('-fp-')
