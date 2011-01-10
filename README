@@ -116,6 +116,9 @@ RewriteRule ^(.+)-fp-[0-9]{10}(.*)$ $1$2 [QSA,PT,L]
 
 If you're not using Apache, then adapt the rules above for your server.
 
+User-submitted rewrite rules for nginx:
+rewrite "^(.+)-fp-[0-9a-z]{32}(.*)" $1$2 last;
+
 
 Option 2 - Generate symlinks
 ============================
@@ -169,7 +172,8 @@ you set AssetFingerprint.symlink_on_the_fly to false.
 
 CONTRIBUTORS:
 Eliot Sykes http://github.com/eliotsykes
-Evan Worley http://github.com/thecypher
+Evan Worley http://github.com/evanworley
+Joe Van Dyk http://github.com/joevandyk
 
 ==============================================================
 More projects at http://blog.eliotsykes.com/my-projects/
