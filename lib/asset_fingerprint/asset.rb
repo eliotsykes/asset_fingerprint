@@ -151,6 +151,10 @@ module AssetFingerprint
         AssetFingerprint.asset_files_served_by_symlink?)
     end
     
+    def self.fingerprint_symlink?(path)
+      File.symlink?(path) && File.basename(path) =~ FINGER_PRINTED_FILE_PATTERN
+    end
+    
     def self.generate_all_symlinks
       AssetFingerprint.asset_paths.each do |source|
         absolute_path = Asset.absolute_path(source)
@@ -164,14 +168,14 @@ module AssetFingerprint
       sources.each do |source|
         if File.directory?(source)
           remove_all_symlinks(Dir.glob(File.join(source, "*")))
-        elsif File.symlink?(source) && File.basename(source) =~ FINGER_PRINTED_FILE_PATTERN
+        elsif fingerprint_symlink?(source)
           File.delete(source)
         end
       end
     end
 
     def self.generate_symlinks(path)
-      if File.file?(path)
+      if File.file?(path) && !fingerprint_symlink?(path)
         asset = Asset.create(path)
         asset.build_symlink
       elsif File.directory?(path)
