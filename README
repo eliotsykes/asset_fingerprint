@@ -43,8 +43,9 @@ This plugin is in use on MissedConnections.com.
 
 Rails Versions
 ==============
-Tested with Rails 2.2.3 though there's a good chance it'll work with earlier
-and newer versions with little or no modification.
+  * Tested with Rails 2.2.3 though there's a good chance it'll work with earlier versions.
+  * For Rails 3.1, use the built-in asset fingerprinting provided by the asset pipeline
+  * For Rails 3.0, take a look at https://github.com/polleverywhere/asset_fingerprinter
 
 Getting started
 ===============
