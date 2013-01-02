@@ -1,5 +1,5 @@
 # Asset Fingerprint
-**Asset Fingerprint is a Ruby on Rails (supports Rails versions 2.2.x & 2.3.x) plugin to fingerprint asset files using md5 checksum (or
+**Asset Fingerprint is a Ruby on Rails plugin (supports Rails versions 2.2.x & 2.3.x, for Rails 3+ see [Rails Version Support][]) to fingerprint asset files using md5 checksum (or
 timestamp or anything else you like) in file names to improve cacheability
 compared to the default Rails asset caching strategy.**
 
